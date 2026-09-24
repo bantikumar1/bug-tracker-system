@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import api from '../services/api';
+import api, { BACKEND_URL } from '../services/api';
 import { 
   User, Mail, Shield, Camera, Lock, Key, Users as UsersIcon, 
   TestTube, Code, Save, Edit3, AlertCircle, CheckCircle2, ShieldCheck,
@@ -20,7 +20,7 @@ const AdminSettings = () => {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [profilePhotoFile, setProfilePhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(user?.profile_photo ? `http://localhost:5000${user.profile_photo}` : null);
+  const [photoPreview, setPhotoPreview] = useState(user?.profile_photo ? `${BACKEND_URL}${user.profile_photo}` : null);
   
   const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
   const [profileSubmitting, setProfileSubmitting] = useState(false);
@@ -51,7 +51,7 @@ const AdminSettings = () => {
       setEmail(data.email || '');
       setTwofaEnabled(!!data.twofa_enabled);
       if (data.profile_photo) {
-        setPhotoPreview(`http://localhost:5000${data.profile_photo}`);
+        setPhotoPreview(`${BACKEND_URL}${data.profile_photo}`);
       }
     } catch (err) {
       console.error('Fetch profile error:', err);
@@ -115,7 +115,7 @@ const AdminSettings = () => {
       loginUser(updatedUser, token);
 
       if (updatedUser.profile_photo) {
-        setPhotoPreview(`http://localhost:5000${updatedUser.profile_photo}`);
+        setPhotoPreview(`${BACKEND_URL}${updatedUser.profile_photo}`);
       }
 
       setProfileMsg({ type: 'success', text: 'Admin profile updated successfully!' });

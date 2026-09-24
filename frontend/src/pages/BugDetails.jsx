@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import api from '../services/api';
+import api, { BACKEND_URL } from '../services/api';
 import { 
   ArrowLeft, Bug, User, Calendar, Clock, 
   AlertCircle, CheckCircle2, UserPlus, ShieldAlert, MessageSquare, Send, Paperclip
@@ -225,7 +225,7 @@ const BugDetails = () => {
                           Screenshot Preview
                         </span>
                         <a 
-                          href={`http://localhost:5000${bug.bug_screenshot}`} 
+                          href={`${BACKEND_URL}${bug.bug_screenshot}`} 
                           target="_blank" 
                           rel="noopener noreferrer" 
                           className="btn-view" 
@@ -236,10 +236,10 @@ const BugDetails = () => {
                       </div>
                       <div style={{ overflow: 'hidden', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
                         <img 
-                          src={`http://localhost:5000${bug.bug_screenshot}`} 
+                          src={`${BACKEND_URL}${bug.bug_screenshot}`} 
                           alt="Bug Evidence Screenshot" 
                           style={{ width: '100%', maxHeight: '240px', objectFit: 'cover', cursor: 'pointer', display: 'block' }} 
-                          onClick={() => window.open(`http://localhost:5000${bug.bug_screenshot}`, '_blank')}
+                          onClick={() => window.open(`${BACKEND_URL}${bug.bug_screenshot}`, '_blank')}
                         />
                       </div>
                     </div>
@@ -257,7 +257,7 @@ const BugDetails = () => {
                           controls 
                           style={{ width: '100%', maxHeight: '240px', background: '#000', display: 'block' }}
                         >
-                          <source src={`http://localhost:5000${bug.bug_video}`} />
+                          <source src={`${BACKEND_URL}${bug.bug_video}`} />
                           Your browser does not support HTML5 video player.
                         </video>
                       </div>

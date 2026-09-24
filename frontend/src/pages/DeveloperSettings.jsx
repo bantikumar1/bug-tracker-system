@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import api from '../services/api';
+import api, { BACKEND_URL } from '../services/api';
 import { 
   User, Mail, Camera, Lock, Key, Save, Edit3, AlertCircle, Code, 
   ShieldCheck, Smartphone, LogOut
@@ -19,7 +19,7 @@ const DeveloperSettings = () => {
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
   const [profilePhotoFile, setProfilePhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(user?.profile_photo ? `http://localhost:5000${user.profile_photo}` : null);
+  const [photoPreview, setPhotoPreview] = useState(user?.profile_photo ? `${BACKEND_URL}${user.profile_photo}` : null);
   const [profileMsg, setProfileMsg] = useState({ type: '', text: '' });
   const [profileSubmitting, setProfileSubmitting] = useState(false);
 
@@ -52,7 +52,7 @@ const DeveloperSettings = () => {
       setEmail(userData.email || '');
       setTwofaEnabled(!!userData.twofa_enabled);
       if (userData.profile_photo) {
-        setPhotoPreview(`http://localhost:5000${userData.profile_photo}`);
+        setPhotoPreview(`${BACKEND_URL}${userData.profile_photo}`);
       }
       setActiveSessions(sessions || []);
     } catch (err) {
@@ -118,7 +118,7 @@ const DeveloperSettings = () => {
       loginUser({ ...user, ...updatedUser }, token);
 
       if (updatedUser.profile_photo) {
-        setPhotoPreview(`http://localhost:5000${updatedUser.profile_photo}`);
+        setPhotoPreview(`${BACKEND_URL}${updatedUser.profile_photo}`);
       }
 
       setProfileMsg({ type: 'success', text: 'Profile information updated successfully!' });

@@ -3,6 +3,10 @@ const nodemailer = require('nodemailer');//Nodemailer ek Node.js library hai jo 
 const sendEmail = async ({ to, subject, html, text }) => {
   const emailUser = process.env.EMAIL_USER;
   const emailPass = process.env.EMAIL_PASS;
+
+  console.log('[DEBUG sendEmail.js] EMAIL_USER:', emailUser);
+  console.log('[DEBUG sendEmail.js] EMAIL_PASS length:', emailPass ? emailPass.length : 0);
+
   const isConfigured = emailUser && emailPass && emailUser !== 'your_email@gmail.com' && emailPass !== 'your_gmail_app_password';
 
   if (!isConfigured) {

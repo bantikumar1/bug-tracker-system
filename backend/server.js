@@ -3,6 +3,9 @@ const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
 
+console.log('[DEBUG server.js] EMAIL_USER:', process.env.EMAIL_USER);
+console.log('[DEBUG server.js] EMAIL_PASS length:', process.env.EMAIL_PASS ? process.env.EMAIL_PASS.length : 0);
+
 const { initializeDatabase } = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');

@@ -126,6 +126,12 @@ async function initializeDatabase() {
       await pool.query("ALTER TABLE users ADD COLUMN otp_expiry DATETIME NULL DEFAULT NULL;");
     } catch (e) {}
     try {
+      await pool.query("ALTER TABLE users ADD COLUMN reset_otp VARCHAR(255) NULL DEFAULT NULL;");
+    } catch (e) {}
+    try {
+      await pool.query("ALTER TABLE users ADD COLUMN reset_otp_expiry DATETIME NULL DEFAULT NULL;");
+    } catch (e) {}
+    try {
       await pool.query("ALTER TABLE users ADD COLUMN otp_attempts INT DEFAULT 0;");
     } catch (e) {}
     try {

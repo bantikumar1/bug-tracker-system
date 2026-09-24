@@ -4,120 +4,7 @@ const crypto = require('crypto');
 const UserModel = require('../models/userModel');
 const sendEmail = require('../utils/sendEmail');
 
-const forgotPassword = async (req, res) => {
-  try {
-    const { email } = req.body;
 
-    if (!email || !email.trim()) {
-      return res.status(400).json({ message: 'Email address is required.' });
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-    const user = await UserModel.findByEmail(cleanEmail);
-
-    // Generic success message to avoid email enumeration
-    const genericResponse = {
-      message: 'If an account with that email exists, a 6-digit OTP has been sent to your email.'
-    };
-
-    if (!user) {
-      return res.status(200).json(genericResponse);
-    }
-
-    // Generate random 6-digit numeric OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const hashedOtp = await bcrypt.hash(otp, 10);
-    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
-
-    await UserModel.setOTP(user.id, hashedOtp, expiry);
-
-    const textContent = `Hello ${user.name},\n\nYou requested a password reset for your BugTracker account.\nYour 6-digit verification OTP code is: ${otp}\n\nThis OTP is valid for 10 minutes. If you did not request this, please ignore this email.\n\nBest regards,\nBugTracker Security Team`;
-    
-    const htmlContent = `
-      <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; background-color: #0b0f17; color: #f8fafc; padding: 2rem; border-radius: 12px; max-width: 520px; margin: 0 auto; border: 1px solid rgba(255,255,255,0.1);">
-        <h2 style="color: #6366f1; margin-top: 0;">BugTracker Password Reset OTP</h2>
-        <p>Hello <strong>${user.name}</strong>,</p>
-        <p>We received a request to reset the password for your BugTracker account.</p>
-        <p style="margin-bottom: 0.5rem; font-weight: 600;">Your 6-digit verification code:</p>
-        <div style="font-size: 2.2rem; font-weight: 800; letter-spacing: 8px; color: #6366f1; background: rgba(99,102,241,0.12); border: 1px dashed #6366f1; padding: 1rem; border-radius: 8px; text-align: center; margin: 1rem 0;">
-          ${otp}
-        </div>
-        <p style="font-size: 0.85rem; color: #94a3b8;">This code is valid for 10 minutes. Enter this OTP along with your new password on the reset page.</p>
-        <p style="font-size: 0.8rem; color: #64748b; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem;">If you did not request a password reset, you can safely ignore this email.</p>
-      </div>
-    `;
-
-    await sendEmail({
-      to: user.email,
-      subject: 'Password Reset OTP Code - BugTracker',
-      text: textContent,
-      html: htmlContent
-    });
-
-    return res.status(200).json(genericResponse);
-  } catch (error) {
-    console.error('Forgot password error:', error);
-    return res.status(500).json({ message: 'Server error while processing password reset request.' });
-  }
-};
-
-const resetPasswordOTP = async (req, res) => {
-  try {
-    const { email, otp, password, confirmPassword } = req.body;
-
-    if (!email || !email.trim()) {
-      return res.status(400).json({ message: 'Email address is required.' });
-    }
-
-    if (!otp || !otp.toString().trim()) {
-      return res.status(400).json({ message: '6-digit OTP code is required.' });
-    }
-
-    if (!password || !confirmPassword) {
-      return res.status(400).json({ message: 'New password and confirmation are required.' });
-    }
-
-    if (password !== confirmPassword) {
-      return res.status(400).json({ message: 'Passwords do not match.' });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
-    }
-
-    const cleanEmail = email.trim().toLowerCase();
-    const user = await UserModel.findByEmail(cleanEmail);
-
-    if (!user || !user.otp_code || !user.otp_expiry) {
-      return res.status(400).json({ message: 'Invalid or expired OTP code. Please request a new OTP.' });
-    }
-
-    if (new Date(user.otp_expiry) < new Date()) {
-      return res.status(400).json({ message: 'OTP code has expired. Please request a new OTP.' });
-    }
-
-    // Rate-limit check (max 5 failed tries)
-    if (user.otp_attempts >= 5) {
-      return res.status(429).json({ message: 'Too many failed OTP attempts. Please request a new OTP.' });
-    }
-
-    const isMatch = await bcrypt.compare(otp.toString().trim(), user.otp_code);
-    if (!isMatch) {
-      await UserModel.incrementOtpAttempts(user.id);
-      return res.status(400).json({ message: 'Invalid OTP code. Please check your email and try again.' });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await UserModel.updatePasswordAndClearOTP(user.id, hashedPassword);
-
-    return res.status(200).json({
-      message: 'Password reset successfully! You can now log in with your new password.'
-    });
-  } catch (error) {
-    console.error('Reset password OTP error:', error);
-    return res.status(500).json({ message: 'Server error while resetting password.' });
-  }
-};
 
 const login = async (req, res) => {
   try {
@@ -404,6 +291,165 @@ const registerPublicUser = async (req, res) => {
   }
 };
 
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({ message: 'Email address is required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await UserModel.findByEmail(cleanEmail);
+
+    const genericResponse = {
+      message: 'If an account with that email exists, a 6-digit OTP has been sent to your email.'
+    };
+
+    if (!user) {
+      return res.status(200).json(genericResponse);
+    }
+
+    // Generate random 6-digit numeric OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const hashedOtp = await bcrypt.hash(otp, 10);
+    const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await UserModel.setOTP(user.id, hashedOtp, expiry);
+
+    const textContent = `Hello ${user.name},\n\nYou requested a password reset for your BugTracker account.\nYour 6-digit verification OTP code is: ${otp}\n\nThis OTP is valid for 10 minutes. If you did not request this, please ignore this email.\n\nBest regards,\nBugTracker Security Team`;
+    
+    const htmlContent = `
+      <div style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; background-color: #0b0f17; color: #f8fafc; padding: 2rem; border-radius: 12px; max-width: 520px; margin: 0 auto; border: 1px solid rgba(255,255,255,0.1);">
+        <h2 style="color: #6366f1; margin-top: 0;">BugTracker Password Reset OTP</h2>
+        <p>Hello <strong>${user.name}</strong>,</p>
+        <p>We received a request to reset the password for your BugTracker account.</p>
+        <p style="margin-bottom: 0.5rem; font-weight: 600;">Your 6-digit verification code:</p>
+        <div style="font-size: 2.2rem; font-weight: 800; letter-spacing: 8px; color: #6366f1; background: rgba(99,102,241,0.12); border: 1px dashed #6366f1; padding: 1rem; border-radius: 8px; text-align: center; margin: 1rem 0;">
+          ${otp}
+        </div>
+        <p style="font-size: 0.85rem; color: #94a3b8;">This code is valid for 10 minutes. Enter this OTP along with your new password on the reset page.</p>
+        <p style="font-size: 0.8rem; color: #64748b; margin-top: 2rem; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 1rem;">If you did not request a password reset, you can safely ignore this email.</p>
+      </div>
+    `;
+
+    await sendEmail({
+      to: user.email,
+      subject: 'Password Reset OTP Code - BugTracker',
+      text: textContent,
+      html: htmlContent
+    });
+
+    return res.status(200).json(genericResponse);
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({ message: 'Server error while processing password reset request.' });
+  }
+};
+
+const verifyResetOTP = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({ message: 'Email address is required.' });
+    }
+
+    if (!otp || !otp.toString().trim()) {
+      return res.status(400).json({ message: '6-digit OTP code is required.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await UserModel.findByEmail(cleanEmail);
+
+    const savedOtpCode = user ? (user.reset_otp || user.otp_code) : null;
+    const savedOtpExpiry = user ? (user.reset_otp_expiry || user.otp_expiry) : null;
+
+    if (!user || !savedOtpCode || !savedOtpExpiry) {
+      return res.status(400).json({ message: 'Invalid or expired OTP code. Please request a new OTP.' });
+    }
+
+    if (new Date(savedOtpExpiry) < new Date()) {
+      return res.status(400).json({ message: 'OTP code has expired. Please request a new OTP.' });
+    }
+
+    if (user.otp_attempts >= 5) {
+      return res.status(429).json({ message: 'Too many failed OTP attempts. Please request a new OTP.' });
+    }
+
+    const isMatch = await bcrypt.compare(otp.toString().trim(), savedOtpCode);
+    if (!isMatch) {
+      await UserModel.incrementOtpAttempts(user.id);
+      return res.status(400).json({ message: 'Invalid OTP code. Please check your email and try again.' });
+    }
+
+    return res.status(200).json({ message: 'OTP verified successfully. Proceed to reset password.' });
+  } catch (error) {
+    console.error('Verify reset OTP error:', error);
+    return res.status(500).json({ message: 'Server error while verifying OTP.' });
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { email, otp, password, confirmPassword } = req.body;
+
+    if (!email || !email.trim()) {
+      return res.status(400).json({ message: 'Email address is required.' });
+    }
+
+    if (!otp || !otp.toString().trim()) {
+      return res.status(400).json({ message: '6-digit OTP code is required.' });
+    }
+
+    if (!password || !confirmPassword) {
+      return res.status(400).json({ message: 'New password and confirmation are required.' });
+    }
+
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: 'Passwords do not match.' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+    const user = await UserModel.findByEmail(cleanEmail);
+
+    const savedOtpCode = user ? (user.reset_otp || user.otp_code) : null;
+    const savedOtpExpiry = user ? (user.reset_otp_expiry || user.otp_expiry) : null;
+
+    if (!user || !savedOtpCode || !savedOtpExpiry) {
+      return res.status(400).json({ message: 'Invalid or expired OTP code. Please request a new OTP.' });
+    }
+
+    if (new Date(savedOtpExpiry) < new Date()) {
+      return res.status(400).json({ message: 'OTP code has expired. Please request a new OTP.' });
+    }
+
+    if (user.otp_attempts >= 5) {
+      return res.status(429).json({ message: 'Too many failed OTP attempts. Please request a new OTP.' });
+    }
+
+    const isMatch = await bcrypt.compare(otp.toString().trim(), savedOtpCode);
+    if (!isMatch) {
+      await UserModel.incrementOtpAttempts(user.id);
+      return res.status(400).json({ message: 'Invalid OTP code. Please check your email and try again.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    await UserModel.updatePasswordAndClearOTP(user.id, hashedPassword);
+
+    return res.status(200).json({
+      message: 'Password reset successfully! You can now log in with your new password.'
+    });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({ message: 'Server error while resetting password.' });
+  }
+};
+
 module.exports = {
   login,
   verifyLoginOtp,
@@ -411,5 +457,6 @@ module.exports = {
   registerTester,
   registerPublicUser,
   forgotPassword,
-  resetPasswordOTP
+  verifyResetOTP,
+  resetPassword
 };

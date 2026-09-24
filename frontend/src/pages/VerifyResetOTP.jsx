@@ -1,31 +1,36 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../services/api';
-import { Mail, KeyRound, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { ShieldCheck, Mail, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 
-const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
+const VerifyResetOTP = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState(location.state?.email || '');
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
+  const handleVerify = async (e) => {
     e.preventDefault();
     setError('');
     setMessage('');
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/forgot-password', { email: email.trim() });
-      setMessage(response.data?.message || 'If an account exists, an OTP has been sent to your email.');
+      const response = await api.post('/auth/verify-reset-otp', {
+        email: email.trim(),
+        otp: otp.trim()
+      });
 
+      setMessage(response.data?.message || 'OTP verified successfully!');
       setTimeout(() => {
-        navigate('/verify-reset-otp', { state: { email: email.trim() } });
-      }, 1500);
+        navigate('/reset-password', { state: { email: email.trim(), otp: otp.trim() } });
+      }, 1000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to request password reset OTP. Please try again.');
+      setError(err.response?.data?.message || 'Invalid or expired OTP code. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -36,10 +41,10 @@ const ForgotPassword = () => {
       <div className="login-card">
         <div className="login-header">
           <div className="login-icon-box">
-            <KeyRound size={36} />
+            <ShieldCheck size={36} />
           </div>
-          <h2>Forgot Password?</h2>
-          <p>Enter your registered email address to receive a 6-digit verification OTP code.</p>
+          <h2>Verify OTP Code</h2>
+          <p>Enter the 6-digit OTP code sent to your email address.</p>
         </div>
 
         {error && (
@@ -56,9 +61,9 @@ const ForgotPassword = () => {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleVerify} className="login-form">
           <div className="form-group">
-            <label htmlFor="email">Registered Email Address</label>
+            <label htmlFor="email">Email Address</label>
             <div className="input-wrapper">
               <Mail className="input-icon" size={18} />
               <input
@@ -72,14 +77,31 @@ const ForgotPassword = () => {
             </div>
           </div>
 
+          <div className="form-group">
+            <label htmlFor="otp">6-Digit Verification OTP</label>
+            <div className="input-wrapper">
+              <ShieldCheck className="input-icon" size={18} />
+              <input
+                id="otp"
+                type="text"
+                required
+                maxLength={6}
+                placeholder="Enter 6-digit OTP"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                style={{ letterSpacing: '6px', fontWeight: '700', fontSize: '1.2rem', textAlign: 'center' }}
+              />
+            </div>
+          </div>
+
           <button type="submit" className="btn-login-submit" disabled={loading}>
-            {loading ? 'Sending OTP Code...' : 'Send Reset OTP'}
+            {loading ? 'Verifying OTP...' : 'Verify OTP & Continue'}
           </button>
         </form>
 
         <div style={{ textAlign: 'center', marginTop: '1.2rem' }}>
           <Link
-            to="/login"
+            to="/forgot-password"
             style={{
               color: 'var(--text-secondary)',
               fontSize: '0.85rem',
@@ -90,7 +112,7 @@ const ForgotPassword = () => {
               fontWeight: '500'
             }}
           >
-            <ArrowLeft size={15} /> Back to Sign In
+            <ArrowLeft size={15} /> Resend Code / Change Email
           </Link>
         </div>
       </div>
@@ -98,4 +120,4 @@ const ForgotPassword = () => {
   );
 };
 
-export default ForgotPassword;
+export default VerifyResetOTP;

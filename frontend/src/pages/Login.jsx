@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../services/api';
-import { Bug, Lock, Mail, ShieldCheck, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Bug, Lock, Mail, ShieldCheck, AlertCircle, CheckCircle2, ArrowLeft, ArrowRight, Eye, EyeOff, Check } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -14,6 +14,7 @@ const Login = () => {
   const [infoMessage, setInfoMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { loginUser } = useContext(AuthContext);
   const navigate = useNavigate();
@@ -68,13 +69,29 @@ const Login = () => {
   };
 
   return (
-    <div className="login-page">
-      <div className="login-card">
+    <main className="auth-page">
+      <section className="auth-showcase" aria-label="BugTracker introduction">
+        <Link to="/" className="auth-brand"><span className="auth-brand-mark"><Bug size={19} /></span> BugTracker</Link>
+        <div className="auth-showcase-copy">
+          <p className="auth-eyebrow">BUG MANAGEMENT, SIMPLIFIED</p>
+          <h1>Turn every bug into a better release.</h1>
+          <p>One calm workspace for reporting, assigning, and resolving issues together.</p>
+        </div>
+        <div className="auth-benefits">
+          {['Clear ownership for every issue', 'Real-time team collaboration', 'Secure, role-based access'].map((benefit) => <div key={benefit}><Check size={16} />{benefit}</div>)}
+        </div>
+        <p className="auth-showcase-note">Built for focused product teams.</p>
+      </section>
+
+      <section className="auth-form-panel">
+        <Link to="/" className="auth-mobile-brand"><span className="auth-brand-mark"><Bug size={18} /></span> BugTracker</Link>
+        <div className="login-card auth-card">
         <div className="login-header">
           <div className="login-icon-box">
             {requiresOtp ? <ShieldCheck size={36} /> : <Bug size={36} />}
           </div>
-          <h2>{requiresOtp ? '2FA Verification' : 'Bug Tracker'}</h2>
+          <p className="auth-eyebrow">{requiresOtp ? 'SECURITY CHECK' : 'WELCOME BACK'}</p>
+          <h2>{requiresOtp ? 'Confirm it’s you' : 'Sign in to BugTracker'}</h2>
           <p>
             {requiresOtp 
               ? 'Enter the 6-digit OTP code sent to your registered email' 
@@ -124,17 +141,20 @@ const Login = () => {
                 <Lock className="input-icon" size={18} />
                 <input
                   id="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
+                <button className="password-toggle" type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
             <button type="submit" className="btn-login-submit" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign In'}
+              {loading ? 'Signing in...' : <><span>Sign in securely</span><ArrowRight size={18} /></>}
             </button>
           </form>
         ) : (
@@ -172,14 +192,13 @@ const Login = () => {
           </form>
         )}
 
-        <div className="login-footer">
-          <div style={{ marginBottom: '1rem', fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-            <p>New Developer? <Link to="/register" style={{ color: 'var(--accent-primary)', fontWeight: '600', textDecoration: 'none' }}>Register as Developer</Link></p>
-            <p>New Tester? <Link to="/tester/register" style={{ color: '#10b981', fontWeight: '600', textDecoration: 'none' }}>Register as Tester</Link></p>
-          </div>
+        {!requiresOtp && <div className="login-footer">
+          <p>New here? <Link to="/signup">Create your account</Link></p>
+          <p className="auth-footer-note">Choose Developer or Tester during signup.</p>
+        </div>}
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 };
 

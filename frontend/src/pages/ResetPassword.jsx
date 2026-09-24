@@ -1,32 +1,25 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../services/api';
-import { Lock, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Lock, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 const ResetPassword = () => {
-  const { token } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
 
+  const [email] = useState(location.state?.email || '');
+  const [otp] = useState(location.state?.otp || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    document.title = 'Reset Password - BugTracker';
-    window.scrollTo(0, 0);
-  }, []);
-
-  const handleSubmit = async (e) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
-
-    if (!password || !confirmPassword) {
-      setError('Please enter and confirm your new password.');
-      return;
-    }
+    setMessage('');
 
     if (password !== confirmPassword) {
       setError('Passwords do not match.');
@@ -41,20 +34,19 @@ const ResetPassword = () => {
     setLoading(true);
 
     try {
-      const response = await api.post(`/auth/reset-password/${token}`, {
+      const response = await api.post('/auth/reset-password', {
+        email: email.trim(),
+        otp: otp.trim(),
         password,
         confirmPassword
       });
 
-      setSuccess(response.data?.message || 'Password reset successfully! Redirecting to login...');
-      setPassword('');
-      setConfirmPassword('');
-
+      setMessage(response.data?.message || 'Password reset successfully! Redirecting to login...');
       setTimeout(() => {
         navigate('/login');
-      }, 2500);
+      }, 2000);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to reset password. The link may be invalid or expired.');
+      setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -62,13 +54,13 @@ const ResetPassword = () => {
 
   return (
     <div className="login-page">
-      <div className="login-card" style={{ maxWidth: '440px' }}>
+      <div className="login-card">
         <div className="login-header">
           <div className="login-icon-box">
-            <Lock size={32} />
+            <Lock size={36} />
           </div>
-          <h2>Create New Password</h2>
-          <p>Your new password must be at least 6 characters long.</p>
+          <h2>Reset Password</h2>
+          <p>Create a new strong password for your BugTracker account.</p>
         </div>
 
         {error && (
@@ -78,14 +70,14 @@ const ResetPassword = () => {
           </div>
         )}
 
-        {success && (
+        {message && (
           <div className="alert-success">
             <CheckCircle2 size={18} />
-            <span>{success}</span>
+            <span>{message}</span>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleResetPassword} className="login-form">
           <div className="form-group">
             <label htmlFor="password">New Password</label>
             <div className="input-wrapper">
@@ -94,7 +86,8 @@ const ResetPassword = () => {
                 id="password"
                 type="password"
                 required
-                placeholder="Enter new password"
+                minLength={6}
+                placeholder="Enter at least 6 characters"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -109,7 +102,8 @@ const ResetPassword = () => {
                 id="confirmPassword"
                 type="password"
                 required
-                placeholder="Confirm new password"
+                minLength={6}
+                placeholder="Re-enter new password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
@@ -117,25 +111,24 @@ const ResetPassword = () => {
           </div>
 
           <button type="submit" className="btn-login-submit" disabled={loading}>
-            {loading ? 'Updating Password...' : 'Reset Password'}
+            {loading ? 'Resetting Password...' : 'Set New Password'}
           </button>
         </form>
 
-        <div className="login-footer">
-          <Link 
-            to="/login" 
-            style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '0.4rem', 
-              color: 'var(--text-secondary)', 
-              fontSize: '0.9rem', 
-              fontWeight: '600', 
-              textDecoration: 'none' 
+        <div style={{ textAlign: 'center', marginTop: '1.2rem' }}>
+          <Link
+            to="/login"
+            style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.85rem',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              fontWeight: '500'
             }}
           >
-            <ArrowLeft size={16} />
-            <span>Back to Sign In</span>
+            <ArrowLeft size={15} /> Back to Sign In
           </Link>
         </div>
       </div>

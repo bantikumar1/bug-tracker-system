@@ -203,8 +203,8 @@ const UserModel = {
   async setOTP(userId, hashedOtp, expiryDate) {
     const pool = getPool();
     await pool.query(
-      'UPDATE users SET otp_code = ?, otp_expiry = ?, otp_attempts = 0 WHERE id = ?',
-      [hashedOtp, expiryDate, userId]
+      'UPDATE users SET otp_code = ?, otp_expiry = ?, reset_otp = ?, reset_otp_expiry = ?, otp_attempts = 0 WHERE id = ?',
+      [hashedOtp, expiryDate, hashedOtp, expiryDate, userId]
     );
     return true;
   },
@@ -221,7 +221,7 @@ const UserModel = {
   async updatePasswordAndClearOTP(userId, hashedPassword) {
     const pool = getPool();
     await pool.query(
-      'UPDATE users SET password = ?, otp_code = NULL, otp_expiry = NULL, otp_attempts = 0 WHERE id = ?',
+      'UPDATE users SET password = ?, otp_code = NULL, otp_expiry = NULL, reset_otp = NULL, reset_otp_expiry = NULL, otp_attempts = 0 WHERE id = ?',
       [hashedPassword, userId]
     );
     return true;

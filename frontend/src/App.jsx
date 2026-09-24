@@ -16,8 +16,8 @@ import SignupPage from './pages/SignupPage';
 import DeveloperRegister from './pages/DeveloperRegister';
 import TesterRegister from './pages/TesterRegister';
 import ForgotPassword from './pages/ForgotPassword';
+import VerifyResetOTP from './pages/VerifyResetOTP';
 import ResetPassword from './pages/ResetPassword';
-import ResetPasswordOTP from './pages/ResetPasswordOTP';
 
 import Dashboard from './pages/Dashboard';
 import DeveloperDashboard from './pages/DeveloperDashboard';
@@ -54,8 +54,8 @@ function App() {
           <Route path="/register" element={<DeveloperRegister />} />
           <Route path="/tester/register" element={<TesterRegister />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/reset-password-otp" element={<ResetPasswordOTP />} />
+          <Route path="/verify-reset-otp" element={<VerifyResetOTP />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Protected Application Routes wrapped in MainLayout */}
           <Route 
